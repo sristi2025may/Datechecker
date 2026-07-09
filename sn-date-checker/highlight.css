@@ -1,0 +1,122 @@
+/* ── SN Date Format Checker: highlight styles ── */
+
+/* Red underline on wrong date text nodes */
+.sn-date-issue {
+  outline: 2px solid #e53935 !important;
+  outline-offset: 2px;
+  background: rgba(229, 57, 53, 0.08) !important;
+  border-radius: 3px;
+  position: relative;
+}
+
+/* Inline i18n badge after the highlighted element */
+.sn-date-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: #e53935;
+  border-radius: 3px;
+  padding: 2px 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Pulse animation when user clicks an issue row */
+@keyframes sn-date-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.6); }
+  70%  { box-shadow: 0 0 0 10px rgba(229, 57, 53, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
+}
+.sn-date-pulse {
+  animation: sn-date-pulse 0.8s ease-out 2;
+}
+
+/* ── Issues panel (bottom-right overlay) ── */
+#sn-date-panel {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  width: 380px;
+  max-height: 340px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#sn-date-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #e53935;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+#sn-date-panel-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+#sn-date-panel-body {
+  overflow-y: auto;
+  max-height: 280px;
+  padding: 0;
+  margin: 0;
+}
+
+.sn-date-panel-row {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sn-date-panel-row:hover {
+  background: #fbe9e7;
+}
+
+.sn-date-panel-found {
+  color: #c62828;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.sn-date-panel-expected {
+  color: #2e7d32;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.sn-date-panel-reason {
+  color: #757575;
+  font-size: 11px;
+  margin-top: 1px;
+}
+
+/* SVG overlay rect for chart labels */
+.sn-date-svg-overlay {
+  fill: rgba(229, 57, 53, 0.15);
+  stroke: #e53935;
+  stroke-width: 1.5;
+  rx: 2;
+  pointer-events: none;
+}

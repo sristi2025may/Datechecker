@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "ServiceNow Date Format Checker",
+  "version": "2.0.0",
+  "description": "Detects wrong/non-localized date formats on ServiceNow pages, including Highcharts SVG axis labels.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.service-now.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SN Date Format Checker"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.service-now.com/*"],
+      "js": ["content.js"],
+      "css": ["highlight.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

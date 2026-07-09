@@ -1,0 +1,45 @@
+# ============================================================
+# ServiceNow Date Format Checker — Selenium Configuration
+# ============================================================
+# Copy this file to config.properties and fill in your values.
+
+# ServiceNow instance URL
+sn.instance.url=https://your-instance.service-now.com
+
+# Login credentials
+sn.username=admin
+sn.password=YOUR_PASSWORD
+
+# Target locale to validate against (e.g. ja, de, fr, zh, ko, es, it, pt-BR)
+sn.locale=ja
+
+# Pages to scan (comma-separated, relative paths or full URLs)
+sn.pages=https://your-instance.service-now.com/now/cmdb/home
+
+# Browser: chrome, firefox, edge
+browser=chrome
+
+# Run browser in headless mode (true/false)
+browser.headless=false
+
+# Page load timeout in seconds
+page.load.timeout.seconds=30
+
+# Delay after page load before scanning (ms)
+scan.delay.ms=10000
+
+# Report output directory
+report.dir=target/reports
+
+# Screenshot output directory
+screenshot.dir=target/screenshots
+
+# Chrome extension path (leave empty to use built-in scanner.js)
+extension.path=
+
+# ─── i18n Global Tracker (Bug Reporting) ───
+tracker.instance.url=https://your-tracker.service-now.com
+tracker.table=x_all_language_tra_all_language_tracker
+tracker.username=your.email@servicenow.com
+tracker.password=YOUR_PASSWORD
+tracker.auto.report=false
