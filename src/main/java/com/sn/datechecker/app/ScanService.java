@@ -88,6 +88,10 @@ public class ScanService {
             options.addArguments("--window-size=1920,1080");
             options.addArguments("--disable-gpu");
             options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--disable-extensions-except");
+            options.addArguments("--remote-allow-origins=*");
+            options.setPageLoadStrategy(org.openqa.selenium.PageLoadStrategy.NORMAL);
 
             String extensionPath = config.get(AppConfig.EXTENSION_PATH);
             if (extensionPath != null && !extensionPath.isBlank()) {
@@ -102,16 +106,41 @@ public class ScanService {
             driver = new org.openqa.selenium.chrome.ChromeDriver(options);
 
             int timeout = Integer.parseInt(config.get(AppConfig.PAGE_TIMEOUT));
-            driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(timeout));
+            driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(Math.max(timeout, 60)));
+            driver.manage().timeouts().scriptTimeout(java.time.Duration.ofSeconds(30));
 
-            // Login
+            // Login with retry
             log("🔐 Logging in to " + instanceUrl + "...");
             log("   Username: '" + username + "', Password length: " + password.length());
             if (password.isEmpty()) {
                 log("   ⚠️ WARNING: Password is empty! Check config.properties.");
             }
             updateStatus("Logging in...");
-            driver.get(instanceUrl + "/login.do");
+
+            boolean loginPageLoaded = false;
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    log("   Loading login page (attempt " + attempt + "/3)...");
+                    driver.get(instanceUrl + "/login.do");
+                    loginPageLoaded = true;
+                    break;
+                } catch (org.openqa.selenium.TimeoutException e) {
+                    log("   ⚠️ Page load timeout on attempt " + attempt + ", retrying...");
+                    if (attempt == 3) {
+                        // Try with shorter timeout using JavaScript navigation
+                        log("   Trying JS navigation fallback...");
+                        driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(120));
+                        try {
+                            driver.get(instanceUrl + "/login.do");
+                            loginPageLoaded = true;
+                        } catch (Exception e2) {
+                            log("❌ Failed to load login page after all retries: " + e2.getMessage());
+                            cleanup();
+                            return;
+                        }
+                    }
+                }
+            }
             Thread.sleep(3000);
 
             try {

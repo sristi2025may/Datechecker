@@ -105,7 +105,7 @@ public class ReportGenerator {
             pw.println("</div>");
             if (trackerEnabled && !issues.isEmpty()) {
                 pw.println("<div style=\"margin-top:12px\">");
-                pw.println("<a class=\"btn-report-all\" href=\"" + escapeHtml(trackerFormUrl) + "\" target=\"_blank\" rel=\"noopener\" onclick=\"reportAllBugs()\">🐛 Report All Bugs to Global Tracker</a>");
+                pw.println("<button class=\"btn-report-all\" onclick=\"reportAllBugs()\">🐛 Report All Bugs to Global Tracker</button>");
                 pw.println("<span id=\"report-all-status\" class=\"report-status\"></span>");
                 pw.println("</div>");
             }
@@ -291,10 +291,12 @@ public class ReportGenerator {
                 var shortDesc = '[' + LOCALE.toUpperCase() + '] ' + clean(reason, 150);
                 var classicUrl = TRACKER_TABLE + '.do?sys_id=-1'
                     + '&sysparm_query=short_description=' + clean(shortDesc, 160)
-                    + '^u_current=' + clean(found, 100)
-                    + '^u_expected=' + clean(expected, 100)
-                    + '^u_additional_details=' + clean(suggestion, 300)
-                    + '^u_steps_to_reproduce=' + clean(pageUrl, 300)
+                    + '^type=i18n'
+                    + '^sub_problem_type_i18n=date_time'
+                    + '^actual_source=' + clean(found, 100)
+                    + '^expected_source=' + clean(expected, 100)
+                    + '^comments=' + clean(suggestion, 300)
+                    + '^repro_steps=' + clean(pageUrl, 300)
                     + '^direct_link=' + clean(pageUrl, 300)
                     + '&sysparm_stack=' + TRACKER_TABLE + '_list.do';
                 btn.href = TRACKER_INSTANCE + '/now/nav/ui/classic/params/target/'
@@ -310,15 +312,26 @@ public class ReportGenerator {
             }
 
             function reportAllBugs() {
-                // The <a> tag handles opening the tracker form.
-                // Trigger clipboard copy and state update for all individual report links.
                 var links = document.querySelectorAll('.btn-report');
                 var statusEl = document.getElementById('report-all-status');
+                statusEl.textContent = ' Opening ' + links.length + ' bug(s)...';
+                statusEl.className = 'report-status';
+
+                // Open each bug in a new tab with its own pre-populated fields
+                var delay = 0;
                 for (var i = 0; i < links.length; i++) {
-                    reportBug(links[i]);
+                    (function(link, idx) {
+                        setTimeout(function() {
+                            reportBug(link);
+                            window.open(link.href, '_blank');
+                            if (idx === links.length - 1) {
+                                statusEl.textContent = ' ✅ Opened ' + links.length + ' bug(s) with all fields pre-populated';
+                                statusEl.className = 'report-status success';
+                            }
+                        }, delay);
+                    })(links[i], i);
+                    delay += 1000;
                 }
-                statusEl.textContent = ' Tracker opened — ' + links.length + ' bug detail(s) ready (last one copied to clipboard)';
-                statusEl.className = 'report-status success';
             }
             """.formatted(cleanUrl, table, locale,
                 testInstanceUrl != null ? testInstanceUrl : "");

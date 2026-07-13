@@ -192,10 +192,12 @@ public class ResultsView {
         // Build pre-populated form URL
         String classicUrl = trackerTable + ".do?sys_id=-1"
                 + "&sysparm_query=short_description=" + clean(shortDesc)
-                + "^u_current=" + clean(selected.getFound())
-                + "^u_expected=" + clean(selected.getExpected())
-                + "^u_additional_details=" + clean(selected.getSuggestion())
-                + "^u_steps_to_reproduce=" + clean(selected.getPageUrl())
+                + "^type=i18n"
+                + "^sub_problem_type_i18n=date_time"
+                + "^actual_source=" + clean(selected.getFound())
+                + "^expected_source=" + clean(selected.getExpected())
+                + "^comments=" + clean(selected.getSuggestion())
+                + "^repro_steps=" + clean(selected.getPageUrl())
                 + "^direct_link=" + clean(selected.getPageUrl())
                 + "&sysparm_stack=" + trackerTable + "_list.do";
 
