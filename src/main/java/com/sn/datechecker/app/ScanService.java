@@ -255,14 +255,55 @@ public class ScanService {
                 log("📄 Scanning: " + pageUrl);
 
                 driver.get(pageUrl);
-                Thread.sleep(scanDelay);
+
+                // Wait until page is fully loaded
+                org.openqa.selenium.JavascriptExecutor pageJs =
+                        (org.openqa.selenium.JavascriptExecutor) driver;
+
+                // 1) Wait for document.readyState == "complete"
+                org.openqa.selenium.support.ui.WebDriverWait pageWait =
+                        new org.openqa.selenium.support.ui.WebDriverWait(
+                                driver, java.time.Duration.ofSeconds(30));
+                pageWait.until(d -> "complete".equals(
+                        ((org.openqa.selenium.JavascriptExecutor) d)
+                                .executeScript("return document.readyState")));
+                log("   DOM ready");
+
+                // 2) Initial wait for Polaris/React to start rendering
+                Thread.sleep(5000);
+
+                // 3) Wait for page content to stabilize (text length stops changing)
+                int prevLen = 0;
+                int stableCount = 0;
+                for (int attempt = 0; attempt < 10; attempt++) {
+                    Object lenObj = pageJs.executeScript(
+                            "return (document.body ? document.body.innerText.length : 0)");
+                    int curLen = lenObj != null ? ((Number) lenObj).intValue() : 0;
+                    if (curLen > 0 && curLen == prevLen) {
+                        stableCount++;
+                        if (stableCount >= 2) break; // Content stable for 2 consecutive checks
+                    } else {
+                        stableCount = 0;
+                    }
+                    prevLen = curLen;
+                    Thread.sleep(2000);
+                }
+                log("   Page content stabilized (text length: " + prevLen + " chars)");
+
+                // 4) Extra settle for any remaining animations/lazy content
+                Thread.sleep(Math.max(scanDelay, 2000));
 
                 List<DateIssue> pageIssues = checker.scan(driver, locale);
                 log("   Found " + pageIssues.size() + " issue(s)");
 
-                // Take screenshot if issues found
+                // Highlight issues with red boxes, then take screenshot
                 if (!pageIssues.isEmpty()) {
                     try {
+                        // Highlight issues on page with red border boxes
+                        checker.highlightIssues(driver, pageIssues);
+                        log("   🔴 Highlighted " + pageIssues.size() + " issue(s) with red boxes");
+                        Thread.sleep(500); // Let rendering settle
+
                         String screenshotDir = config.get(AppConfig.SCREENSHOT_DIR);
                         Files.createDirectories(Paths.get(screenshotDir));
                         File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
@@ -272,7 +313,7 @@ public class ScanService {
                         for (DateIssue issue : pageIssues) {
                             issue.setScreenshotPath(dest.toString());
                         }
-                        log("   📸 Screenshot saved");
+                        log("   📸 Screenshot saved (with highlights)");
                     } catch (Exception e) {
                         log("   ⚠️ Screenshot failed: " + e.getMessage());
                     }
