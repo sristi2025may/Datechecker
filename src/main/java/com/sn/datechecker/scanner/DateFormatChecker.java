@@ -930,7 +930,7 @@ public class DateFormatChecker {
      * - Special SN code note: fq→fr-CA, zt→zh-Hant, pb→pt-BR
      */
     private String buildHowToFix(String type, String found, Locale locale) {
-        return "https://buildtools1.service-now.com/kb_view.do?sysparm_article=KB0562050#locales-and-internationalization";
+        return "https://buildtools1.service-now.com/kb_view.do?sysparm_article=KB0562050";
     }
 
     private String formatLong(LocalDate date, Locale locale) {

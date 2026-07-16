@@ -277,7 +277,7 @@ public class ReportGenerator {
 
             // Strip chars that break sysparm_query structure and truncate
             function clean(s, maxLen) {
-                return s.replace(/[\\^&=\\n\\r]/g, ' ').replace(/\\s+/g, ' ').trim().substring(0, maxLen || 200);
+                return s.replace(/[\\^&=\\n\\r#?]/g, ' ').replace(/\\s+/g, ' ').trim().substring(0, maxLen || 200);
             }
 
             function reportBug(btn) {

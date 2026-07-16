@@ -234,7 +234,7 @@ public class ResultsView {
 
     private String clean(String s) {
         if (s == null) return "";
-        return s.replaceAll("[\\^&=\\n\\r]", " ").replaceAll("\\s+", " ").trim();
+        return s.replaceAll("[\\^&=\\n\\r#?]", " ").replaceAll("\\s+", " ").trim();
     }
 
     private void showAlert(String msg) {
