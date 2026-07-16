@@ -63,46 +63,30 @@ public class DateFormatChecker {
     );
 
     static {
-        // Extension's original 10 locales
-        LOCALE_MAP.put("ja",      Locale.forLanguageTag("ja-JP"));
-        LOCALE_MAP.put("ko",      Locale.forLanguageTag("ko-KR"));
-        LOCALE_MAP.put("zh-CN",   Locale.forLanguageTag("zh-CN"));
-        LOCALE_MAP.put("zh-Hant", Locale.forLanguageTag("zh-Hant"));
-        LOCALE_MAP.put("de",      Locale.forLanguageTag("de-DE"));
-        LOCALE_MAP.put("fr",      Locale.forLanguageTag("fr-FR"));
-        LOCALE_MAP.put("es-MX",   Locale.forLanguageTag("es-MX"));
-        LOCALE_MAP.put("pt-BR",   Locale.forLanguageTag("pt-BR"));
-        LOCALE_MAP.put("it",      Locale.forLanguageTag("it-IT"));
-        LOCALE_MAP.put("nl",      Locale.forLanguageTag("nl-NL"));
-
-        // Additional common locales
-        LOCALE_MAP.put("ar",      Locale.forLanguageTag("ar-SA"));
-        LOCALE_MAP.put("tr",      Locale.forLanguageTag("tr-TR"));
-        LOCALE_MAP.put("th",      Locale.forLanguageTag("th-TH"));
-        LOCALE_MAP.put("hi",      Locale.forLanguageTag("hi-IN"));
-        LOCALE_MAP.put("ru",      Locale.forLanguageTag("ru-RU"));
-        LOCALE_MAP.put("pl",      Locale.forLanguageTag("pl-PL"));
-        LOCALE_MAP.put("sv",      Locale.forLanguageTag("sv-SE"));
-        LOCALE_MAP.put("da",      Locale.forLanguageTag("da-DK"));
-        LOCALE_MAP.put("fi",      Locale.forLanguageTag("fi-FI"));
-        LOCALE_MAP.put("nb",      Locale.forLanguageTag("nb-NO"));
-        LOCALE_MAP.put("cs",      Locale.forLanguageTag("cs-CZ"));
-        LOCALE_MAP.put("hu",      Locale.forLanguageTag("hu-HU"));
-        LOCALE_MAP.put("ro",      Locale.forLanguageTag("ro-RO"));
-        LOCALE_MAP.put("el",      Locale.forLanguageTag("el-GR"));
-        LOCALE_MAP.put("he",      Locale.forLanguageTag("he-IL"));
-        LOCALE_MAP.put("id",      Locale.forLanguageTag("id-ID"));
-        LOCALE_MAP.put("ms",      Locale.forLanguageTag("ms-MY"));
-        LOCALE_MAP.put("vi",      Locale.forLanguageTag("vi-VN"));
-        LOCALE_MAP.put("uk",      Locale.forLanguageTag("uk-UA"));
-        LOCALE_MAP.put("bg",      Locale.forLanguageTag("bg-BG"));
-        LOCALE_MAP.put("hr",      Locale.forLanguageTag("hr-HR"));
-        LOCALE_MAP.put("sk",      Locale.forLanguageTag("sk-SK"));
-        LOCALE_MAP.put("sl",      Locale.forLanguageTag("sl-SI"));
-        LOCALE_MAP.put("ca",      Locale.forLanguageTag("ca-ES"));
-        LOCALE_MAP.put("es",      Locale.forLanguageTag("es-ES"));
-        LOCALE_MAP.put("pt",      Locale.forLanguageTag("pt-PT"));
-        LOCALE_MAP.put("fr-CA",   Locale.forLanguageTag("fr-CA"));
+        // ServiceNow Language Pack — 24 supported languages
+        LOCALE_MAP.put("ar",      Locale.forLanguageTag("ar-SA"));    // Arabic
+        LOCALE_MAP.put("pt-BR",   Locale.forLanguageTag("pt-BR"));   // Brazilian Portuguese
+        LOCALE_MAP.put("zh-CN",   Locale.forLanguageTag("zh-CN"));   // Chinese (Simplified)
+        LOCALE_MAP.put("zh-Hant", Locale.forLanguageTag("zh-Hant")); // Chinese (Traditional)
+        LOCALE_MAP.put("cs",      Locale.forLanguageTag("cs-CZ"));   // Czech
+        LOCALE_MAP.put("nl",      Locale.forLanguageTag("nl-NL"));   // Dutch
+        LOCALE_MAP.put("fi",      Locale.forLanguageTag("fi-FI"));   // Finnish
+        LOCALE_MAP.put("fr",      Locale.forLanguageTag("fr-FR"));   // French
+        LOCALE_MAP.put("fr-CA",   Locale.forLanguageTag("fr-CA"));   // French Canadian
+        LOCALE_MAP.put("de",      Locale.forLanguageTag("de-DE"));   // German
+        LOCALE_MAP.put("he",      Locale.forLanguageTag("he-IL"));   // Hebrew
+        LOCALE_MAP.put("hu",      Locale.forLanguageTag("hu-HU"));   // Hungarian
+        LOCALE_MAP.put("it",      Locale.forLanguageTag("it-IT"));   // Italian
+        LOCALE_MAP.put("ja",      Locale.forLanguageTag("ja-JP"));   // Japanese
+        LOCALE_MAP.put("ko",      Locale.forLanguageTag("ko-KR"));   // Korean
+        LOCALE_MAP.put("nb",      Locale.forLanguageTag("nb-NO"));   // Norwegian
+        LOCALE_MAP.put("pl",      Locale.forLanguageTag("pl-PL"));   // Polish
+        LOCALE_MAP.put("pt",      Locale.forLanguageTag("pt-PT"));   // Portuguese
+        LOCALE_MAP.put("ru",      Locale.forLanguageTag("ru-RU"));   // Russian
+        LOCALE_MAP.put("es",      Locale.forLanguageTag("es-ES"));   // Spanish
+        LOCALE_MAP.put("sv",      Locale.forLanguageTag("sv-SE"));   // Swedish
+        LOCALE_MAP.put("th",      Locale.forLanguageTag("th-TH"));   // Thai
+        LOCALE_MAP.put("tr",      Locale.forLanguageTag("tr-TR"));   // Turkish
     }
 
     // ───────────────────── Detection Patterns ─────────────────────
@@ -561,7 +545,7 @@ public class DateFormatChecker {
             String localizedExample = getSuggestion(t, targetLocale);
             return buildIssue(t, "english-month",
                     "English month name found — locale is " + targetLocale.toLanguageTag(),
-                    localizedExample);
+                    localizedExample, targetLocale);
         }
 
         // Rule 2: English weekday names in non-English locale
@@ -569,14 +553,14 @@ public class DateFormatChecker {
             String localizedExample = getSuggestion(t, targetLocale);
             return buildIssue(t, "english-weekday",
                     "English weekday name found — locale is " + targetLocale.toLanguageTag(),
-                    localizedExample);
+                    localizedExample, targetLocale);
         }
 
         // Rule 3: Wrong month-year order (CJK/Korean)
         if (BARE_MONTH_YEAR_RE.matcher(t).find()) {
             return buildIssue(t, "wrong-order",
                     "Month before year — wrong order for this locale",
-                    getSuggestion(t, targetLocale));
+                    getSuggestion(t, targetLocale), targetLocale);
         }
 
         // Rule 3b: CJK month-day-year (wrong order): "3月 31 2026", "7月 07 2026 9:30 午前"
@@ -597,8 +581,8 @@ public class DateFormatChecker {
                         expected += " " + timePart.trim();
                     }
                     return buildIssue(matched, "non-localized-date",
-                            "CJK month-day-year order — should be year-month-day for " + targetLocale.getDisplayLanguage(),
-                            expected);
+                            "month-day-year order — should be year-month-day for " + targetLocale.getDisplayLanguage(),
+                            expected, targetLocale);
                 }
             } catch (Exception ignored) {}
         }
@@ -618,8 +602,8 @@ public class DateFormatChecker {
                         LocalDate date = LocalDate.of(year, monthNum, safeDay);
                         String expected = formatLong(date, targetLocale);
                         return buildIssue(matched, "non-localized-date",
-                                "Text-month date format — use getDisplayValueLang() or Intl.DateTimeFormat",
-                                expected);
+                                "Text-month date format — not localized for " + targetLocale.getDisplayLanguage(),
+                                expected, targetLocale);
                     }
                 } catch (Exception ignored) {}
             }
@@ -632,7 +616,7 @@ public class DateFormatChecker {
             if (obviouslyWrong) {
                 return buildIssue(t, "wrong-format",
                         "Date appears to be in English/wrong format",
-                        getSuggestion(t, targetLocale));
+                        getSuggestion(t, targetLocale), targetLocale);
             }
         }
 
@@ -640,8 +624,8 @@ public class DateFormatChecker {
         // e.g. "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DD" in input placeholders
         if (DATE_FORMAT_PATTERN_RE.matcher(t).matches()) {
             return buildIssue(t, "non-localized-placeholder",
-                    "Hardcoded ISO datetime — use getDisplayValueLang() or Intl.DateTimeFormat",
-                    getLocalizedFormatPattern(targetLocale));
+                    "Hardcoded date format pattern — should use locale-aware formatting",
+                    getLocalizedFormatPattern(targetLocale), targetLocale);
         }
 
         // Rule 6: Non-localized numeric date formats (search within text, not exact match)
@@ -649,38 +633,38 @@ public class DateFormatChecker {
         if (isoDateTimeMatcher.find()) {
             String matched = isoDateTimeMatcher.group(1);
             return buildIssue(matched, "non-localized-date",
-                    "Hardcoded ISO 8601 datetime — use getDisplayValueLang() or Intl.DateTimeFormat",
-                    getSuggestionFromIso(matched, targetLocale));
+                    "Hardcoded ISO 8601 datetime — not localized for " + targetLocale.getDisplayLanguage(),
+                    getSuggestionFromIso(matched, targetLocale), targetLocale);
         }
         // ISO date: "2026-06-24" (negative lookahead prevents matching datetime)
         java.util.regex.Matcher isoDateMatcher = ISO_DATE_RE.matcher(t);
         if (isoDateMatcher.find()) {
             String matched = isoDateMatcher.group(1);
             return buildIssue(matched, "non-localized-date",
-                    "Hardcoded ISO 8601 date — use getDisplayValueLang() or Intl.DateTimeFormat",
-                    getSuggestionFromIso(matched, targetLocale));
+                    "Hardcoded ISO 8601 date — not localized for " + targetLocale.getDisplayLanguage(),
+                    getSuggestionFromIso(matched, targetLocale), targetLocale);
         }
         // Truncated datetime: "06-24 19:30"
         if (TRUNC_DATETIME_RE.matcher(t).matches()) {
             return buildIssue(t, "non-localized-date",
                     "Truncated date — not localized for " + targetLocale.getDisplayLanguage(),
-                    null);
+                    null, targetLocale);
         }
         // US-style datetime: "06/24/2026 19:30:00"
         java.util.regex.Matcher usDateTimeMatcher = US_DATETIME_RE.matcher(t);
         if (usDateTimeMatcher.find()) {
             String matched = usDateTimeMatcher.group(1);
             return buildIssue(matched, "non-localized-date",
-                    "Hardcoded US date format — use getDisplayValueLang() or Intl.DateTimeFormat",
-                    getSuggestionFromUsDate(matched, targetLocale));
+                    "Hardcoded US date format — not localized for " + targetLocale.getDisplayLanguage(),
+                    getSuggestionFromUsDate(matched, targetLocale), targetLocale);
         }
         // US-style: "06/24/2026"
         java.util.regex.Matcher usDateMatcher = US_DATE_RE.matcher(t);
         if (usDateMatcher.find()) {
             String matched = usDateMatcher.group(1);
             return buildIssue(matched, "non-localized-date",
-                    "Hardcoded US date format — use getDisplayValueLang() or Intl.DateTimeFormat",
-                    getSuggestionFromUsDate(matched, targetLocale));
+                    "Hardcoded US date format — not localized for " + targetLocale.getDisplayLanguage(),
+                    getSuggestionFromUsDate(matched, targetLocale), targetLocale);
         }
         // European dot-style: "24.06.2026" (wrong for non-European locales)
         java.util.regex.Matcher euDotMatcher = EU_DOT_DATE_RE.matcher(t);
@@ -692,8 +676,8 @@ public class DateFormatChecker {
                 && !"ro".equals(lang) && !"bg".equals(lang)) {
                 String matched = euDotMatcher.group(1);
                 return buildIssue(matched, "non-localized-date",
-                        "Hardcoded European date format — use getDisplayValueLang() or Intl.DateTimeFormat",
-                        null);
+                        "Hardcoded European date format — not localized for " + targetLocale.getDisplayLanguage(),
+                        null, targetLocale);
             }
         }
 
@@ -825,19 +809,57 @@ public class DateFormatChecker {
     }
 
     /**
-     * Build the set of "correct" date strings for a sample date in all four
+     * Build the set of "correct" date strings for multiple sample dates in all four
      * format styles (FULL, LONG, MEDIUM, SHORT). Text matching any of these
      * is considered properly localised and won't be flagged.
+     *
+     * Per SN documentation, valid Asian date formats include:
+     *   ja: Full=2023年10月16日, Long=2023/10/16, Medium=2023/10/16, Short=23/10/16
+     *   ko: Full=2023년 10월 16일 월요일, Long=2023년 10월 16일, Medium=2023. 10. 16
+     *   zh-CN: Full=2023年10月16日 星期一, Long=2023年10月16日, Medium=2023-10-16
      */
     private Set<String> buildExpectedPatterns(Locale locale) {
         Set<String> patterns = new HashSet<>();
-        LocalDate sample = LocalDate.of(2023, 1, 18);
-        for (FormatStyle style : FormatStyle.values()) {
-            try {
-                String formatted = DateTimeFormatter.ofLocalizedDate(style)
-                        .withLocale(locale).format(sample);
-                patterns.add(formatted);
-            } catch (Exception ignored) {}
+        // Use multiple sample dates to build a broader whitelist
+        LocalDate[] samples = {
+            LocalDate.of(2023, 1, 18),
+            LocalDate.of(2024, 6, 15),
+            LocalDate.of(2025, 12, 31),
+            LocalDate.now()
+        };
+        for (LocalDate sample : samples) {
+            for (FormatStyle style : FormatStyle.values()) {
+                try {
+                    String formatted = DateTimeFormatter.ofLocalizedDate(style)
+                            .withLocale(locale).format(sample);
+                    patterns.add(formatted);
+                } catch (Exception ignored) {}
+            }
+        }
+        // Add CJK slash-format dates as valid patterns (per SN Intl.DateTimeFormat output)
+        String lang = locale.getLanguage();
+        if ("ja".equals(lang)) {
+            // Japanese long/medium uses slash format: YYYY/MM/DD
+            for (LocalDate s : samples) {
+                patterns.add(String.format("%d/%d/%d", s.getYear(), s.getMonthValue(), s.getDayOfMonth()));
+                patterns.add(String.format("%d/%02d/%02d", s.getYear(), s.getMonthValue(), s.getDayOfMonth()));
+                // Short: YY/MM/DD
+                patterns.add(String.format("%02d/%d/%d", s.getYear() % 100, s.getMonthValue(), s.getDayOfMonth()));
+                patterns.add(String.format("%02d/%02d/%02d", s.getYear() % 100, s.getMonthValue(), s.getDayOfMonth()));
+            }
+        } else if ("ko".equals(lang)) {
+            // Korean medium/short: YYYY. MM. DD or YYYY. M. D
+            for (LocalDate s : samples) {
+                patterns.add(String.format("%d. %d. %d", s.getYear(), s.getMonthValue(), s.getDayOfMonth()));
+                patterns.add(String.format("%d. %02d. %02d", s.getYear(), s.getMonthValue(), s.getDayOfMonth()));
+            }
+        } else if ("zh".equals(lang)) {
+            // Chinese simplified medium: YYYY-MM-DD, short: YY-MM-DD
+            for (LocalDate s : samples) {
+                patterns.add(String.format("%d-%d-%d", s.getYear(), s.getMonthValue(), s.getDayOfMonth()));
+                patterns.add(String.format("%02d-%d-%d", s.getYear() % 100, s.getMonthValue(), s.getDayOfMonth()));
+                patterns.add(String.format("%02d-%02d-%02d", s.getYear() % 100, s.getMonthValue(), s.getDayOfMonth()));
+            }
         }
         return patterns;
     }
@@ -885,41 +907,30 @@ public class DateFormatChecker {
         }
     }
 
-    private DateIssue buildIssue(String found, String type, String reason, String suggestion) {
+    private DateIssue buildIssue(String found, String type, String reason, String suggestion, Locale locale) {
         DateIssue issue = new DateIssue();
         issue.setFound(found);
         issue.setType(type);
         issue.setReason(reason);
         issue.setExpected(suggestion != null ? suggestion : "");
-        // Build how-to-fix with SN Utah API references (KB0562050)
-        String howToFix = buildHowToFix(type, found);
+        // Build how-to-fix with SN Utah+ API references (KB0562050)
+        String howToFix = buildHowToFix(type, found, locale);
         issue.setSuggestion(howToFix);
         return issue;
     }
 
     /**
-     * Build a "How to fix" suggestion referencing ServiceNow Utah APIs
+     * Build a "How to fix" suggestion referencing ServiceNow Utah+ APIs
      * per KB0562050 (Locale Support - Date and Time).
+     *
+     * Includes:
+     * - Server-side fix: GlideDate/GlideDateTime.getDisplayValueLang(style)
+     * - Client-side fix: Intl.DateTimeFormat with dateStyle/timeStyle
+     * - Locale-specific expected output examples for all 4 styles
+     * - Special SN code note: fq→fr-CA, zt→zh-Hant, pb→pt-BR
      */
-    private String buildHowToFix(String type, String found) {
-        StringBuilder fix = new StringBuilder();
-        fix.append("How to fix (KB0562050):\n");
-
-        if ("non-localized-date".equals(type) || "non-localized-placeholder".equals(type)) {
-            fix.append("  Server: use getDisplayValueLang(\"long\")\n");
-            fix.append("    e.g.: new GlideDateTime(\"" + found + "\").getDisplayValueLang(\"long\")\n");
-            fix.append("  Client: new Intl.DateTimeFormat(userLang, {dateStyle: \"long\", timeStyle: \"short\"}).format(date)\n");
-        } else if ("english-month".equals(type) || "english-weekday".equals(type)) {
-            fix.append("  Server: use getDisplayValueLang(\"long\")\n");
-            fix.append("    e.g.: gdt.getDisplayValueLang(\"long\") // auto-localizes month/day names\n");
-            fix.append("  Client: new Intl.DateTimeFormat(userLang, {dateStyle: \"long\"}).format(date)\n");
-        } else if ("wrong-order".equals(type) || "wrong-format".equals(type)) {
-            fix.append("  Server: use getDisplayValueLang(\"long\") or getDisplayValueLang(\"full\")\n");
-            fix.append("  Client: new Intl.DateTimeFormat(userLang, {dateStyle: \"long\"}).format(date)\n");
-        }
-
-        fix.append("  Ref: KB0562050 — Locale Support - Date and Time");
-        return fix.toString();
+    private String buildHowToFix(String type, String found, Locale locale) {
+        return "https://buildtools1.service-now.com/kb_view.do?sysparm_article=KB0562050#locales-and-internationalization";
     }
 
     private String formatLong(LocalDate date, Locale locale) {

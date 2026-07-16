@@ -21,10 +21,31 @@ public class ScanConfigView {
     private final AppConfig config;
     private final VBox view;
 
+    // ServiceNow Language Pack — 24 supported languages + 3 SN alias codes
     private static final String[] LOCALES = {
-            "ja", "ko", "zh-CN", "zh-Hant", "de", "fr", "es-MX", "pt-BR", "it", "nl",
-            "ar", "tr", "th", "hi", "ru", "pl", "sv", "da", "fi", "nb",
-            "cs", "hu", "ro", "el", "he", "id", "ms", "vi", "uk", "bg", "hr", "sk"
+            "ar",       // Arabic
+            "pt-BR",    // Brazilian Portuguese (SN alias: pb)
+            "zh-CN",    // Chinese (Simplified)
+            "zh-Hant",  // Chinese (Traditional) (SN alias: zt)
+            "cs",       // Czech
+            "nl",       // Dutch
+            "fi",       // Finnish
+            "fr",       // French
+            "fr-CA",    // French Canadian (SN alias: fq)
+            "de",       // German
+            "he",       // Hebrew
+            "hu",       // Hungarian
+            "it",       // Italian
+            "ja",       // Japanese
+            "ko",       // Korean
+            "nb",       // Norwegian
+            "pl",       // Polish
+            "pt",       // Portuguese
+            "ru",       // Russian
+            "es",       // Spanish
+            "sv",       // Swedish
+            "th",       // Thai
+            "tr"        // Turkish
     };
 
     public ScanConfigView(AppConfig config) {

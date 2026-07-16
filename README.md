@@ -167,9 +167,11 @@ Datechecker/
     └── reports/                               # Generated HTML reports
 ```
 
-## Supported Locales (30+)
+## Supported Locales (ServiceNow Language Pack — 24 Languages)
 
-Japanese, Chinese (Simplified & Traditional), Korean, German, French, Spanish, Italian, Portuguese, Dutch, Polish, Russian, Swedish, Finnish, Norwegian, Danish, Czech, Hungarian, Romanian, Greek, Turkish, Ukrainian, Arabic, Hebrew, Hindi, Thai, and ServiceNow special codes (`fq`, `zt`, `pb`).
+Arabic, Brazilian Portuguese, Chinese (Simplified), Chinese (Traditional), Czech, Dutch, Finnish, French, French Canadian, German, Hebrew, Hungarian, Italian, Japanese, Korean, Norwegian, Polish, Portuguese, Russian, Spanish, Swedish, Thai, Turkish.
+
+ServiceNow alias codes also accepted: `fq` (French Canadian), `zt` (Traditional Chinese), `pb` (Brazilian Portuguese).
 
 ## How It Works
 
