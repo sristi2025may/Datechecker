@@ -224,7 +224,7 @@ public class DateFormatChecker {
         "var results = [];" +
         "var seen = new Set();" +
         "function addText(t) { t = t.trim(); if (t.length >= 4 && !seen.has(t)) { seen.add(t); results.push(t); } }" +
-        "var SKIP_TAGS = {script:1,style:1,noscript:1,template:1,svg:1};" +
+        "var SKIP_TAGS = {script:1,style:1,noscript:1,template:1};" +
         // Visibility check: skip elements not visible to the user
         "function isVisible(el) {" +
         "  if (el.hidden || el.getAttribute('aria-hidden') === 'true') return false;" +
@@ -266,12 +266,34 @@ public class DateFormatChecker {
         "      if (title) addText(title);" +
         "      var ariaVal = node.getAttribute('aria-valuetext');" +
         "      if (ariaVal) addText(ariaVal);" +
+        "      if (tag === 'svg') {" +
+        "        var svgTexts = node.querySelectorAll('text');" +
+        "        for (var s = 0; s < svgTexts.length; s++) { addText(svgTexts[s].textContent); }" +
+        "        continue;" +
+        "      }" +
         "      if (node.shadowRoot) walkNode(node.shadowRoot);" +
         "      walkNode(node);" +
         "    }" +
         "  }" +
         "}" +
         "walkNode(document.body);" +
+        // Deep SVG scan: recursively find all SVGs across shadow DOM boundaries
+        // (chart components often bury SVGs several shadow DOM levels deep)
+        "function deepSvgScan(root) {" +
+        "  if (!root) return;" +
+        "  try {" +
+        "    var svgs = root.querySelectorAll('svg');" +
+        "    for (var i = 0; i < svgs.length; i++) {" +
+        "      var texts = svgs[i].querySelectorAll('text');" +
+        "      for (var j = 0; j < texts.length; j++) { addText(texts[j].textContent); }" +
+        "    }" +
+        "    var allEls = root.querySelectorAll('*');" +
+        "    for (var i = 0; i < allEls.length; i++) {" +
+        "      if (allEls[i].shadowRoot) deepSvgScan(allEls[i].shadowRoot);" +
+        "    }" +
+        "  } catch(e) {}" +
+        "}" +
+        "deepSvgScan(document);" +
         "return JSON.stringify(results);";
 
     // ───────────────────── Public API ─────────────────────
@@ -404,8 +426,19 @@ public class DateFormatChecker {
             "var markedEls = new Set();" +
             "function applyHighlight(el) {" +
             "  if (markedEls.has(el)) return;" +
-            "  el.style.border = '3px solid red';" +
-            "  el.style.boxShadow = '0 0 8px rgba(255,0,0,0.5)';" +
+            "  var isSvg = el.ownerSVGElement || (el.tagName && el.tagName.toLowerCase() === 'svg');" +
+            "  if (isSvg) {" +
+            "    var r = el.getBoundingClientRect();" +
+            "    var ov = document.createElement('div');" +
+            "    ov.style.cssText = 'position:absolute;pointer-events:none;z-index:99999;" +
+            "      border:3px solid red;box-shadow:0 0 8px rgba(255,0,0,0.5);" +
+            "      left:'+(r.left+window.scrollX)+'px;top:'+(r.top+window.scrollY)+'px;" +
+            "      width:'+r.width+'px;height:'+r.height+'px';" +
+            "    document.body.appendChild(ov);" +
+            "  } else {" +
+            "    el.style.border = '3px solid red';" +
+            "    el.style.boxShadow = '0 0 8px rgba(255,0,0,0.5)';" +
+            "  }" +
             "  markedEls.add(el);" +
             "  highlighted++;" +
             "}" +
@@ -439,9 +472,21 @@ public class DateFormatChecker {
             "      try { if (node.contentDocument) walkChildren(node.contentDocument.body); } catch(e) {}" +
             "      return;" +
             "    }" +
+            // SVG: search <text> elements inside and highlight individual text elements
+            "    if (tag === 'svg') {" +
+            "      var svgTexts = node.querySelectorAll('text');" +
+            "      for (var s = 0; s < svgTexts.length; s++) {" +
+            "        if ((svgTexts[s].textContent || '').indexOf(text) >= 0) {" +
+            "          var rect = svgTexts[s].getBoundingClientRect();" +
+            "          var sz = rect.width * rect.height;" +
+            "          if (sz > 0 && sz < bestSize) { best = svgTexts[s]; bestSize = sz; }" +
+            "        }" +
+            "      }" +
+            "      return;" +
+            "    }" +
             // Check if this element's visible text contains the search key
             "    var tc = '';" +
-            "    try { tc = node.innerText || ''; } catch(e) { tc = node.textContent || ''; }" +
+            "    try { tc = node.textContent || ''; } catch(e) {}" +
             "    if (tc.indexOf(text) >= 0) {" +
             "      var rect = node.getBoundingClientRect();" +
             "      var sz = rect.width * rect.height;" +
@@ -457,9 +502,52 @@ public class DateFormatChecker {
             "  walk(root);" +
             "  return best;" +
             "}" +
-            // Process each key
+            // Deep shadow DOM search: find elements across all shadow boundaries
+            "function deepFind(root, text) {" +
+            "  if (!root) return null;" +
+            "  var best = null; var bestSize = Infinity;" +
+            "  try {" +
+            // Search SVGs in this root — target individual <text> elements
+            "    var svgs = root.querySelectorAll('svg');" +
+            "    for (var i = 0; i < svgs.length; i++) {" +
+            "      var txts = svgs[i].querySelectorAll('text');" +
+            "      for (var j = 0; j < txts.length; j++) {" +
+            "        if ((txts[j].textContent || '').indexOf(text) >= 0) {" +
+            "          var r = txts[j].getBoundingClientRect();" +
+            "          var s = r.width * r.height;" +
+            "          if (s > 0 && s < bestSize) { best = txts[j]; bestSize = s; }" +
+            "        }" +
+            "      }" +
+            "    }" +
+            // Search all elements in this root
+            "    var all = root.querySelectorAll('*');" +
+            "    for (var i = 0; i < all.length; i++) {" +
+            "      var el = all[i];" +
+            "      var tc = (el.textContent || '').trim();" +
+            "      if (tc.indexOf(text) >= 0) {" +
+            "        var r = el.getBoundingClientRect();" +
+            "        var s = r.width * r.height;" +
+            "        if (s > 0 && s < bestSize && r.height < 400 && r.width < 700) {" +
+            "          best = el; bestSize = s;" +
+            "        }" +
+            "      }" +
+            // Recurse into shadow roots
+            "      if (el.shadowRoot) {" +
+            "        var sub = deepFind(el.shadowRoot, text);" +
+            "        if (sub) {" +
+            "          var sr = sub.getBoundingClientRect();" +
+            "          var ss = sr.width * sr.height;" +
+            "          if (ss > 0 && ss < bestSize) { best = sub; bestSize = ss; }" +
+            "        }" +
+            "      }" +
+            "    }" +
+            "  } catch(e) {}" +
+            "  return best;" +
+            "}" +
+            // Process each key: try fast walk first, then deep search as fallback
             "for (var i = 0; i < keys.length; i++) {" +
             "  var el = findSmallest(document.body, keys[i]);" +
+            "  if (!el) el = deepFind(document, keys[i]);" +
             "  if (el) applyHighlight(el);" +
             "}" +
             "return highlighted;";
