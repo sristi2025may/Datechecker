@@ -57,16 +57,31 @@ An end-to-end automation framework that validates date/time format localization 
 | Component | File | Responsibility |
 |-----------|------|----------------|
 | **TestConfig** | `config/TestConfig.java` | Loads all settings from `config.properties` — instance URL, credentials, locale, pages, browser, tracker config |
+| **AppConfig** | `app/AppConfig.java` | GUI-mode configuration manager — persists settings to `~/.datechecker/config.properties` |
 | **config.properties** | `test/resources/config.properties` | Single source of truth for all runtime parameters |
 
-### 3.2 Browser Layer
+### 3.2 JavaFX GUI Layer
+
+| Component | File | Responsibility |
+|-----------|------|----------------|
+| **DateCheckerApp** | `app/DateCheckerApp.java` | JavaFX Application entry point |
+| **DateCheckerLauncher** | `app/DateCheckerLauncher.java` | Main class launcher (avoids JavaFX module issues) |
+| **MainView** | `app/MainView.java` | Main window layout — tab navigation |
+| **ConnectionView** | `app/views/ConnectionView.java` | Instance URL + credential input |
+| **ScanConfigView** | `app/views/ScanConfigView.java` | Locale + page selection |
+| **ScanRunnerView** | `app/views/ScanRunnerView.java` | Scan progress + live status |
+| **ResultsView** | `app/views/ResultsView.java` | Displays scan results + one-click bug reporting |
+| **SettingsView** | `app/views/SettingsView.java` | Browser, timeout, tracker settings |
+| **ScanService** | `app/ScanService.java` | Orchestrates scanning — login, navigate, scan, report |
+
+### 3.3 Browser Layer
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
 | **DriverFactory** | `driver/DriverFactory.java` | Creates and manages Chrome/Firefox/Edge WebDriver instances via WebDriverManager |
 | **SNLoginPage** | `pages/SNLoginPage.java` | Page Object for ServiceNow login — handles authentication and language preference |
 
-### 3.3 Scanning & Detection Engine
+### 3.4 Scanning & Detection Engine
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
@@ -75,7 +90,7 @@ An end-to-end automation framework that validates date/time format localization 
 | **ExtensionContentInjector** | `scanner/ExtensionContentInjector.java` | Injects scanner.js into the page as an alternative scanning approach |
 | **scanner.js** | `resources/scanner.js` | Client-side JavaScript scanner for text extraction |
 
-### 3.4 Visual Highlighting
+### 3.5 Visual Highlighting
 
 Built into `DateFormatChecker.highlightIssues()`:
 
@@ -84,7 +99,7 @@ Issue Detected → Extract Highlight Key → Inject JavaScript
                                               │
                             ┌─────────────────┼──────────────────┐
                             ▼                 ▼                  ▼
-                    english-month      ISO/US dates        placeholders
+                    english-month      date/time values    placeholders
                     "Jun 27"           "2026-06-29"        "YYYY-MM-DD"
                             │                 │                  │
                             └─────────────────┼──────────────────┘
@@ -94,7 +109,7 @@ Issue Detected → Extract Highlight Key → Inject JavaScript
                               Apply red border + box-shadow
 ```
 
-### 3.5 Screenshot Capture
+### 3.6 Screenshot Capture
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
@@ -110,14 +125,14 @@ Page.captureScreenshot → Capture entire page
 Emulation.clearDeviceMetricsOverride → Reset viewport
 ```
 
-### 3.6 Reporting & Bug Filing
+### 3.7 Reporting & Bug Filing
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
 | **ReportGenerator** | `report/ReportGenerator.java` | Generates self-contained HTML report with embedded screenshots, issue tables, and "Report Bug" buttons |
 | **BugReporter** | `report/BugReporter.java` | Java client for ServiceNow Table API — creates defects and attaches screenshots |
 
-### 3.7 Data Model
+### 3.8 Data Model
 
 | Component | File | Fields |
 |-----------|------|--------|
@@ -129,14 +144,16 @@ Emulation.clearDeviceMetricsOverride → Reset viewport
 
 | Issue Type | Pattern | Example |
 |------------|---------|---------|
-| `non-localized-date` | ISO 8601, US/EU date formats | `2026-06-29 02:20:52`, `06/29/2026` |
-| `non-localized-placeholder` | English date placeholders | `YYYY-MM-DD HH:mm:ss` |
-| `english-month` | English month names in non-English locale | `Jun 27`, `January 18` |
-| `english-weekday` | English weekday names | `Monday`, `Tue` |
-| `wrong-order` | Incorrect date component order for locale | Year-first when locale expects day-first |
-| `wrong-format` | Mismatched separator or format style | Dots vs slashes for the target locale |
+| `non-localized-date` | Date/time not localized for target language | `2026-06-29 02:20:52`, `06/29/2026` |
+| `non-localized-placeholder` | Date format pattern not localized | `YYYY-MM-DD HH:mm:ss` |
+| `english-month` | English month name found in non-English locale | `Jun 27`, `January 18` |
+| `english-weekday` | English weekday name found in non-English locale | `Monday`, `Tue` |
+| `wrong-order` | Month before year — wrong order for locale | `3月 2023` instead of `2023年3月` |
+| `wrong-format` | Date not localized for target language | English-style date in non-English locale |
 
-**Supported Locales:** ar, ja, zh, ko, de, fr, it, pt-BR, nl, tr, th, hi, ru, pl, sv, da, fi, nb, cs, hu, ro, el, he, id, ms, vi, uk, bg, hr, sk, sl, ca, es, pt, fr-CA (34 locales)
+**Supported Locales (24):** ar, pt-BR, zh-CN, zh-Hant, cs, nl, fi, fr, fr-CA, de, he, hu, it, ja, ko, nb, pl, pt, ru, es, sv, th, tr + English (base)
+
+**SN Locale Aliases:** fq → fr-CA, zt → zh-Hant, pb → pt-BR
 
 ---
 
@@ -248,7 +265,7 @@ DateFormatTest.tearDown()
 
 | Layer | Technology |
 |-------|------------|
-| **Language** | Java 17 |
+| **Language** | Java 17+ |
 | **Build** | Maven |
 | **Test Framework** | TestNG |
 | **Browser Automation** | Selenium WebDriver 4.21 |
@@ -260,6 +277,7 @@ DateFormatTest.tearDown()
 | **JSON Handling** | Gson 2.11 |
 | **Logging** | SLF4J + slf4j-simple |
 | **Bug Reporting** | ServiceNow Table API (REST) + Attachment API |
+| **GUI** | JavaFX 21 |
 | **Report Format** | Self-contained HTML (Base64 embedded screenshots) |
 
 ---
@@ -270,9 +288,23 @@ DateFormatTest.tearDown()
 Datechecker/
 ├── pom.xml                          # Maven build config
 ├── testng.xml                       # TestNG suite definition
+├── docs/
+│   └── architecture.md              # This file
 ├── src/
 │   ├── main/
 │   │   ├── java/com/sn/datechecker/
+│   │   │   ├── app/                         # JavaFX GUI application
+│   │   │   │   ├── DateCheckerApp.java      # JavaFX Application entry point
+│   │   │   │   ├── DateCheckerLauncher.java  # Main class launcher
+│   │   │   │   ├── MainView.java            # Main window layout
+│   │   │   │   ├── ScanService.java         # Scan orchestrator
+│   │   │   │   ├── AppConfig.java           # GUI config manager
+│   │   │   │   └── views/
+│   │   │   │       ├── ConnectionView.java   # Instance + credentials
+│   │   │   │       ├── ScanConfigView.java   # Locale + page selection
+│   │   │   │       ├── ScanRunnerView.java   # Scan progress
+│   │   │   │       ├── ResultsView.java      # Results + bug reporting
+│   │   │   │       └── SettingsView.java     # App settings
 │   │   │   ├── config/
 │   │   │   │   └── TestConfig.java           # Configuration loader
 │   │   │   ├── driver/
@@ -297,7 +329,7 @@ Datechecker/
 │       ├── java/com/sn/datechecker/tests/
 │       │   └── DateFormatTest.java           # Test orchestrator
 │       └── resources/
-│           └── config.properties             # Runtime configuration
+│           └── config.properties.template    # Config template
 └── target/
     ├── reports/                              # Generated HTML reports
     └── screenshots/                          # Captured page screenshots
