@@ -602,7 +602,7 @@ public class DateFormatChecker {
                         LocalDate date = LocalDate.of(year, monthNum, safeDay);
                         String expected = formatLong(date, targetLocale);
                         return buildIssue(matched, "non-localized-date",
-                                "Text-month date format — not localized for " + targetLocale.getDisplayLanguage(),
+                                "Date not localized for " + targetLocale.getDisplayLanguage(),
                                 expected, targetLocale);
                     }
                 } catch (Exception ignored) {}
@@ -615,7 +615,7 @@ public class DateFormatChecker {
                                   || EN_DATE_DMY_RE.matcher(t).matches();
             if (obviouslyWrong) {
                 return buildIssue(t, "wrong-format",
-                        "Date appears to be in English/wrong format",
+                        "Date not localized for " + targetLocale.getDisplayLanguage(),
                         getSuggestion(t, targetLocale), targetLocale);
             }
         }
@@ -624,7 +624,7 @@ public class DateFormatChecker {
         // e.g. "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DD" in input placeholders
         if (DATE_FORMAT_PATTERN_RE.matcher(t).matches()) {
             return buildIssue(t, "non-localized-placeholder",
-                    "Hardcoded date format pattern — should use locale-aware formatting",
+                    "Date format pattern not localized for " + targetLocale.getDisplayLanguage(),
                     getLocalizedFormatPattern(targetLocale), targetLocale);
         }
 
@@ -633,7 +633,7 @@ public class DateFormatChecker {
         if (isoDateTimeMatcher.find()) {
             String matched = isoDateTimeMatcher.group(1);
             return buildIssue(matched, "non-localized-date",
-                    "Hardcoded ISO 8601 datetime — not localized for " + targetLocale.getDisplayLanguage(),
+                    "Date/time not localized for " + targetLocale.getDisplayLanguage(),
                     getSuggestionFromIso(matched, targetLocale), targetLocale);
         }
         // ISO date: "2026-06-24" (negative lookahead prevents matching datetime)
@@ -641,13 +641,13 @@ public class DateFormatChecker {
         if (isoDateMatcher.find()) {
             String matched = isoDateMatcher.group(1);
             return buildIssue(matched, "non-localized-date",
-                    "Hardcoded ISO 8601 date — not localized for " + targetLocale.getDisplayLanguage(),
+                    "Date not localized for " + targetLocale.getDisplayLanguage(),
                     getSuggestionFromIso(matched, targetLocale), targetLocale);
         }
         // Truncated datetime: "06-24 19:30"
         if (TRUNC_DATETIME_RE.matcher(t).matches()) {
             return buildIssue(t, "non-localized-date",
-                    "Truncated date — not localized for " + targetLocale.getDisplayLanguage(),
+                    "Date not localized for " + targetLocale.getDisplayLanguage(),
                     null, targetLocale);
         }
         // US-style datetime: "06/24/2026 19:30:00"
@@ -655,7 +655,7 @@ public class DateFormatChecker {
         if (usDateTimeMatcher.find()) {
             String matched = usDateTimeMatcher.group(1);
             return buildIssue(matched, "non-localized-date",
-                    "Hardcoded US date format — not localized for " + targetLocale.getDisplayLanguage(),
+                    "Date not localized for " + targetLocale.getDisplayLanguage(),
                     getSuggestionFromUsDate(matched, targetLocale), targetLocale);
         }
         // US-style: "06/24/2026"
@@ -663,7 +663,7 @@ public class DateFormatChecker {
         if (usDateMatcher.find()) {
             String matched = usDateMatcher.group(1);
             return buildIssue(matched, "non-localized-date",
-                    "Hardcoded US date format — not localized for " + targetLocale.getDisplayLanguage(),
+                    "Date not localized for " + targetLocale.getDisplayLanguage(),
                     getSuggestionFromUsDate(matched, targetLocale), targetLocale);
         }
         // European dot-style: "24.06.2026" (wrong for non-European locales)
@@ -676,7 +676,7 @@ public class DateFormatChecker {
                 && !"ro".equals(lang) && !"bg".equals(lang)) {
                 String matched = euDotMatcher.group(1);
                 return buildIssue(matched, "non-localized-date",
-                        "Hardcoded European date format — not localized for " + targetLocale.getDisplayLanguage(),
+                        "Date not localized for " + targetLocale.getDisplayLanguage(),
                         null, targetLocale);
             }
         }
