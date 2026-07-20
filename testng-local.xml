@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="CLDR Locale Format Tests (Local)" verbose="1">
+    <test name="CLDR Detection Rules">
+        <classes>
+            <class name="com.sn.datechecker.tests.CldrLocaleFormatTest"/>
+        </classes>
+    </test>
+</suite>

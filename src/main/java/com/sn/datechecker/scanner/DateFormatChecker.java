@@ -211,6 +211,62 @@ public class DateFormatChecker {
         }
     }
 
+    // ───────────────────── CLDR Locale Format Data ─────────────────────
+
+    /** CLDR month-year format patterns per locale (Unicode CLDR). */
+    private static final Map<String, String> MONTH_YEAR_PATTERNS = new LinkedHashMap<>();
+    static {
+        MONTH_YEAR_PATTERNS.put("ar",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("pt-BR",   "MMMM 'de' y");
+        MONTH_YEAR_PATTERNS.put("zh-CN",   "y\u5E74M\u6708");        // y年M月
+        MONTH_YEAR_PATTERNS.put("zh-Hant", "y\u5E74M\u6708");        // y年M月
+        MONTH_YEAR_PATTERNS.put("cs",      "LLLL y");
+        MONTH_YEAR_PATTERNS.put("nl",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("fi",      "LLLL y");
+        MONTH_YEAR_PATTERNS.put("fr",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("fr-CA",   "MMMM y");
+        MONTH_YEAR_PATTERNS.put("de",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("he",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("hu",      "y. MMMM");
+        MONTH_YEAR_PATTERNS.put("it",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("ja",      "y\u5E74M\u6708");        // y年M月
+        MONTH_YEAR_PATTERNS.put("ko",      "y\uB144 M\uC6D4");      // y년 M월
+        MONTH_YEAR_PATTERNS.put("nb",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("pl",      "LLLL y");
+        MONTH_YEAR_PATTERNS.put("pt",      "MMMM 'de' y");
+        MONTH_YEAR_PATTERNS.put("ru",      "LLLL y '\u0433'.");      // LLLL y 'г'.
+        MONTH_YEAR_PATTERNS.put("es",      "MMMM 'de' y");
+        MONTH_YEAR_PATTERNS.put("sv",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("th",      "MMMM y");
+        MONTH_YEAR_PATTERNS.put("tr",      "MMMM y");
+    }
+
+    /** CLDR time format patterns per locale. Most use HH:mm:ss. */
+    private static final Map<String, String> TIME_PATTERNS = new LinkedHashMap<>();
+    static {
+        for (String code : LOCALE_MAP.keySet()) TIME_PATTERNS.put(code, "HH:mm:ss");
+        TIME_PATTERNS.put("fi",    "H.mm.ss");      // Finnish uses dot separator
+        TIME_PATTERNS.put("ja",    "H:mm:ss");       // Japanese single-digit hour
+    }
+
+    /** Localized AM/PM markers per locale (built from Java CLDR at init). */
+    private static final Map<String, String[]> LOCALE_AMPM = new LinkedHashMap<>();
+    static {
+        for (Map.Entry<String, Locale> e : LOCALE_MAP.entrySet()) {
+            try {
+                java.text.DateFormatSymbols dfs = java.text.DateFormatSymbols.getInstance(e.getValue());
+                LOCALE_AMPM.put(e.getKey(), dfs.getAmPmStrings());
+            } catch (Exception ignored) {}
+        }
+    }
+
+    /** English AM/PM in time strings — should be localized in non-English locales. */
+    private static final Pattern ENGLISH_AMPM_RE = Pattern.compile(
+            "\\d{1,2}:\\d{2}(:\\d{2})?\\s*[AaPp]\\.?[Mm]\\.?");
+
+    /** Locales where year is expressed in Buddhist Era (CLDR default for th). */
+    private static final Set<String> BUDDHIST_CALENDAR_LOCALES = Set.of("th");
+
     // ───────────────────── JavaScript for text extraction ─────────────────────
 
     /**
@@ -621,7 +677,7 @@ public class DateFormatChecker {
      * @param expectedPatterns pre-computed correct date patterns for the locale
      * @return a DateIssue if a problem is found, or null if the text is fine
      */
-    DateIssue detectIssue(String text, Locale targetLocale, Set<String> expectedPatterns) {
+    public DateIssue detectIssue(String text, Locale targetLocale, Set<String> expectedPatterns) {
         String t = text.trim();
         if (t.isEmpty() || t.length() < 4) return null;
 
@@ -642,6 +698,17 @@ public class DateFormatChecker {
             return buildIssue(t, "english-weekday",
                     "English weekday name found — locale is " + targetLocale.toLanguageTag(),
                     localizedExample, targetLocale);
+        }
+
+        // Rule 2b: English AM/PM markers in non-English locale
+        if (ENGLISH_AMPM_RE.matcher(t).find()) {
+            String localeKey = resolveLocaleKey(targetLocale);
+            String[] ampm = LOCALE_AMPM.get(localeKey);
+            if (ampm != null && !"AM".equalsIgnoreCase(ampm[0])) {
+                return buildIssue(t, "non-localized-date",
+                        "English AM/PM marker — use localized marker (" + ampm[0] + "/" + ampm[1] + ") for " + targetLocale.toLanguageTag(),
+                        null, targetLocale);
+            }
         }
 
         // Rule 3: Wrong month-year order (CJK/Korean)
@@ -689,6 +756,10 @@ public class DateFormatChecker {
                         int safeDay = Math.min(day, java.time.YearMonth.of(year, monthNum).lengthOfMonth());
                         LocalDate date = LocalDate.of(year, monthNum, safeDay);
                         String expected = formatLong(date, targetLocale);
+                        // If the text already matches the expected locale format, it's correct — skip
+                        if (expected != null && matched.equals(expected)) {
+                            return null;
+                        }
                         return buildIssue(matched, "non-localized-date",
                                 "Date not localized for " + targetLocale.getDisplayLanguage(),
                                 expected, targetLocale);
@@ -761,7 +832,8 @@ public class DateFormatChecker {
             // Only flag if this is NOT a European locale that uses dot format
             if (!"de".equals(lang) && !"cs".equals(lang) && !"sk".equals(lang)
                 && !"hr".equals(lang) && !"sl".equals(lang) && !"hu".equals(lang)
-                && !"ro".equals(lang) && !"bg".equals(lang)) {
+                && !"ro".equals(lang) && !"bg".equals(lang) && !"fi".equals(lang)
+                && !"nb".equals(lang) && !"pl".equals(lang) && !"tr".equals(lang)) {
                 String matched = euDotMatcher.group(1);
                 return buildIssue(matched, "non-localized-date",
                         "Date not localized for " + targetLocale.getDisplayLanguage(),
@@ -778,7 +850,7 @@ public class DateFormatChecker {
      * Attempt to parse the incorrect date and reformat it in the target locale.
      * Mirrors {@code getSuggestion()} in content.js.
      */
-    String getSuggestion(String text, Locale targetLocale) {
+    public String getSuggestion(String text, Locale targetLocale) {
         // Pattern: "3月 2023" (bare CJK month + year)
         Matcher bareMatch = BARE_MONTH_YEAR_RE.matcher(text);
         if (bareMatch.matches()) {
@@ -906,7 +978,7 @@ public class DateFormatChecker {
      *   ko: Full=2023년 10월 16일 월요일, Long=2023년 10월 16일, Medium=2023. 10. 16
      *   zh-CN: Full=2023年10月16日 星期一, Long=2023年10月16日, Medium=2023-10-16
      */
-    private Set<String> buildExpectedPatterns(Locale locale) {
+    public Set<String> buildExpectedPatterns(Locale locale) {
         Set<String> patterns = new HashSet<>();
         // Use multiple sample dates to build a broader whitelist
         LocalDate[] samples = {
@@ -948,7 +1020,37 @@ public class DateFormatChecker {
                 patterns.add(String.format("%02d-%d-%d", s.getYear() % 100, s.getMonthValue(), s.getDayOfMonth()));
                 patterns.add(String.format("%02d-%02d-%02d", s.getYear() % 100, s.getMonthValue(), s.getDayOfMonth()));
             }
+        } else if ("fi".equals(lang)) {
+            // Finnish: d.M.y (dot-separated)
+            for (LocalDate s : samples) {
+                patterns.add(String.format("%d.%d.%d", s.getDayOfMonth(), s.getMonthValue(), s.getYear()));
+            }
+        } else if ("hu".equals(lang)) {
+            // Hungarian: y. MM. dd. or y. MMMM d.
+            for (LocalDate s : samples) {
+                patterns.add(String.format("%d. %02d. %02d.", s.getYear(), s.getMonthValue(), s.getDayOfMonth()));
+            }
         }
+
+        // Add CLDR month-year formatted strings to whitelist
+        String localeKey = resolveLocaleKey(locale);
+        String myPattern = MONTH_YEAR_PATTERNS.get(localeKey);
+        if (myPattern != null) {
+            try {
+                DateTimeFormatter myFmt = DateTimeFormatter.ofPattern(myPattern, locale);
+                for (LocalDate s : samples) {
+                    patterns.add(myFmt.format(s));
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Add localized AM/PM markers as valid patterns
+        String[] ampm = LOCALE_AMPM.get(localeKey);
+        if (ampm != null) {
+            patterns.add(ampm[0]);
+            patterns.add(ampm[1]);
+        }
+
         return patterns;
     }
 
@@ -1032,11 +1134,26 @@ public class DateFormatChecker {
 
     private String formatYearMonth(LocalDate date, Locale locale) {
         try {
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM yyyy", locale);
+            String localeKey = resolveLocaleKey(locale);
+            String pattern = MONTH_YEAR_PATTERNS.getOrDefault(localeKey, "MMMM y");
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern(pattern, locale);
             return fmt.format(date);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Map a Locale back to its key in LOCALE_MAP / MONTH_YEAR_PATTERNS.
+     */
+    private String resolveLocaleKey(Locale locale) {
+        for (Map.Entry<String, Locale> e : LOCALE_MAP.entrySet()) {
+            if (e.getValue().equals(locale)
+                    || e.getValue().toLanguageTag().equals(locale.toLanguageTag())) {
+                return e.getKey();
+            }
+        }
+        return locale.getLanguage();
     }
 
     /**
